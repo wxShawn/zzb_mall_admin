@@ -1,7 +1,7 @@
-import { login } from './login'
-import * as products from './products'
+import admin from './admin'
+import goods from './goods'
 
 export default {
-  login,
-  products,
+  admin,
+  goods,
 }
