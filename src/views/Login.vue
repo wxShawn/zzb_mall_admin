@@ -11,6 +11,7 @@
           default-value="pwdLogin"
           animated
         >
+          <!-- 密码登录表单 -->
           <n-tab-pane name="pwdLogin" tab="密码登录">
             <n-form
               ref="formRef"
@@ -27,7 +28,7 @@
                 </n-input>
               </n-form-item>
               <n-form-item path="password" label="密码">
-                <n-input v-model:value="user.password" placeholder="输入密码" maxlength="15">
+                <n-input type="password" show-password-on="click" v-model:value="user.password" placeholder="输入密码" maxlength="15">
                   <template #prefix>
                     <n-icon :component="LockFilled" />
                   </template>
@@ -39,6 +40,7 @@
             </n-form>
           </n-tab-pane>
 
+          <!-- 验证码登录表单 -->
           <n-tab-pane name="vcLogin" tab="验证码登录">
             <n-form
               ref="vcFormRef"
@@ -103,8 +105,19 @@ import api from '../api/index';
 import router from '../router';
 import { emailRegExp, passwordRegExp, verifyCodeRegexp } from '../utils/regexp';
 
+// 将 naive ui 消息功能挂载到 window 对象上，以便在 vue 组件外使用
+window.$message = useMessage();
+
 // naive ui 消息组件
 const nMessage = useMessage();
+
+// 登录成功之后的操作
+const loginSuccess = (data) => {
+  nMessage.success(data.message);
+  sessionStorage.setItem('jwt', data.result.jwt);
+  console.log(`${data.result.adminInfo.admin_name}，你好， 欢迎回来！`);
+  router.push({name: 'Home'});
+}
 
 
 /**
@@ -112,11 +125,13 @@ const nMessage = useMessage();
  */
 // 表单标识
 const formRef = ref(null);
+
 // 表单信息
 const user = reactive({
   email: '1806394760@qq.com',
   password: '12345678'
 });
+
 // 表单校验规则
 const rules = {
   email: [
@@ -126,7 +141,7 @@ const rules = {
         if (!value) {
           return new Error('请输入邮箱');
         }
-        if ((value.replace(emailRegExp, '')).length > 0) {
+        if (!emailRegExp.test(value)) {
           return new Error('邮箱格式错误');
         }
         return true;
@@ -141,7 +156,7 @@ const rules = {
         if (!value) {
           return new Error('请输入密码');
         }
-        if (value.replace(passwordRegExp, '').length > 0) {
+        if (!passwordRegExp.test(value)) {
           return new Error('密码格式错误: 支持8-15个 "数字 字母 _ . @"');
         }
         return true;
@@ -150,6 +165,7 @@ const rules = {
     }
   ]
 };
+
 // 登录
 const login = async () => {
   // 发送登录请求前校验表格数据是否合法
@@ -157,7 +173,7 @@ const login = async () => {
     await formRef.value.validate()
   } catch (error) {
     console.log(error);
-    return fasle;
+    return false;
   }
   // 发送登录请求
   const { data } = await api.admin.loginByPassword({
@@ -166,10 +182,7 @@ const login = async () => {
   });
   console.log(data);
   if (data.code === 0) {
-    nMessage.success(data.message);
-    sessionStorage.setItem('jwt', data.result.jwt);
-    console.log(`${data.result.adminInfo.admin_name}，你好， 欢迎回来！`);
-    router.push({name: 'Home'});
+    loginSuccess(data);
   }
 }
 
@@ -179,15 +192,19 @@ const login = async () => {
  */
 // 验证码登录表单标识
 const vcFormRef = ref(null);
+
 // 验证码登录表单 email表单项的标识
 const vcFormEmailRef = ref(null);
+
 // 验证码登录表单信息
 const vcUser = reactive({
-  email: '1806394760@qq',
+  email: '',
   verify_code: ''
 });
+
 // 控制是否禁用获取验证码的按键
 let verifyCodeBtnDisabled = ref(false);
+
 // 验证码登录表单校验规则
 const vcRules = {
   email: [
@@ -197,7 +214,7 @@ const vcRules = {
         if (!value) {
           return new Error('请输入邮箱');
         }
-        if ((value.replace(emailRegExp, '')).length > 0) {
+        if (!emailRegExp.test(value)) {
           return new Error('邮箱格式错误');
         }
         return true;
@@ -212,7 +229,7 @@ const vcRules = {
         if (!value) {
           return new Error('请输入验证码');
         }
-        if (value.replace(verifyCodeRegexp, '').length > 0) {
+        if (!verifyCodeRegexp.test(value)) {
           return new Error('验证码格式错误: 需要输入6位数字');
         }
         return true;
@@ -221,12 +238,15 @@ const vcRules = {
     }
   ]
 };
+
 // 验证码获取按钮的倒计时渲染
 const renderCountdown = ({ hours, minutes, seconds }) => {
   return `${String(seconds).padStart(2, "0")}`;
 };
+
 // 获取验证码
 const getVerifyCode = async () => {
+  // 请求前验证邮箱是否合法
   try {
     await vcFormEmailRef.value.validate();
   } catch (error) {
@@ -239,6 +259,7 @@ const getVerifyCode = async () => {
     verifyCodeBtnDisabled.value = true;
   }
 }
+
 // 验证码登录
 const vcLogin = async () => {
   // 发送登录请求前校验表格数据是否合法
@@ -255,10 +276,7 @@ const vcLogin = async () => {
   });
   console.log(data);
   if (data.code === 0) {
-    nMessage.success(data.message);
-    sessionStorage.setItem('jwt', data.result.jwt);
-    console.log(`${data.result.adminInfo.admin_name}，你好， 欢迎回来！`);
-    router.push({name: 'Home'});
+    loginSuccess(data);
   }
 }
 

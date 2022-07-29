@@ -2,11 +2,11 @@
 
   <div class="admin-info">
 
-    <n-text class="admin-role" depth="3">运营专员</n-text>
+    <n-text class="admin-role" depth="3">{{ adminInfo ? adminInfo.role_name : '' }}</n-text>
 
     <n-dropdown :options="adminInfoOption">
       <n-button quaternary>
-        <n-text type="primary">Shawn</n-text>
+        <n-text type="primary">{{ adminInfo ? adminInfo.name : '' }}</n-text>
       </n-button>
     </n-dropdown>
 
@@ -86,13 +86,12 @@ import render from '../../utils/render';
 import { passwordRegExp, verifyCodeRegexp } from '../../utils/regexp';
 
 // 父组件传递的参数，adminInfo 包含除密码外的所有信息
-const props = defineProps({
+const { adminInfo } = defineProps({
   adminInfo: Object,
 });
-const {adminInfo} = props;
 
 // naive ui 消息组件
-const nMessage = useMessage()
+const nMessage = useMessage();
 
 // 管理员信息下拉菜单数据
 const adminInfoOption = [
@@ -158,10 +157,9 @@ const newPwdFormRules = {
 }
 // 获取用于修改密码的验证码
 const getEmailVerifyCode = async () => {
-  const { email } = adminInfo;
-  const res = await api.admin.getChangePwdVerifyCode({ email });
-  if (res.code === 0) {
-    nMessage.success(res.data.message);
+  const { data } = await api.admin.getChangePwdVerifyCode();
+  if (data.code === 0) {
+    nMessage.success(data.message);
   }
 }
 // 修改密码
@@ -173,12 +171,11 @@ const changePassword = async () => {
     console.log(error);
     return false;
   }
-  const { email } = adminInfo;
-  const res = await api.admin.changePassword({ email, ...newPwdFormInfo });
-  if (res.code === 0) {
+  const { data } = await api.admin.changePassword(newPwdFormInfo);
+  if (data.code === 0) {
     // 修改成功，关闭模态框
-    showChangPwdModal.value = true;
-    nMessage.success(res.data.message);
+    showChangPwdModal.value = false;
+    nMessage.success(data.message);
   }
 };
 

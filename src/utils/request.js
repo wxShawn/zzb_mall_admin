@@ -35,8 +35,6 @@ request.interceptors.response.use(function (response) {
 
     switch (status) {
       case 401: // 401 身份未认证或身份认证未通过
-        console.warn(message);
-        window.$message.warning(message);
         router.push({ name: 'Login' });
         break;
       case 500: // 服务器错误
@@ -44,6 +42,7 @@ request.interceptors.response.use(function (response) {
         window.$message.error(message);
         break;
       default:
+        console.warn(message);
         window.$message.error(message);
         break;
     }
